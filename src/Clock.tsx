@@ -1,51 +1,79 @@
 import React from 'react';
 type Props = {
-  clockName: string;
+  name: string;
 };
 type State = {
   today: Date;
 };
-export class Clock extends React.PureComponent<Props> {
+export class Clock extends React.Component<Props, State> {
   state: State = {
     today: new Date(),
   };
 
-  timerId = 0;
+  timeToday: number = 0;
 
-  componentDidMount(): void {
-    this.timerId = window.setInterval(() => {
+  handleStart = () => {
+    if (this.timeToday) {
+      return;
+    }
+
+    this.timeToday = window.setInterval(() => {
+      const now = new Date();
+
+      // eslint-disable-next-line no-console
+      console.log(now.toUTCString().slice(-12, -4));
       this.setState({
         today: new Date(),
       });
-      // eslint-disable-next-line
-      console.info(this.state.today.toUTCString().slice(-12, -4));
     }, 1000);
+  };
+
+  handleStop = () => {
+    if (this.timeToday) {
+      window.clearInterval(this.timeToday);
+      this.timeToday = 0;
+    }
+  };
+
+  handleClick = () => {
+    this.handleStart();
+  };
+
+  handleContextMenu = (event: MouseEvent) => {
+    event.preventDefault();
+    this.handleStop();
+  };
+
+  componentDidMount(): void {
+    this.handleStart();
+    document.addEventListener('click', this.handleClick);
+    document.addEventListener('contextmenu', this.handleContextMenu);
   }
 
-  componentDidUpdate(prevProps: Props): void {
-    const oldName = prevProps.clockName;
-    const newName = this.props.clockName;
+  componentDidUpdate(prevProps: Readonly<Props>): void {
+    const { name } = prevProps;
 
-    if (oldName !== newName) {
-      // eslint-disable-next-line
-      console.debug(`Renamed from ${oldName} to ${newName}`);
+    if (name !== this.props.name) {
+      // eslint-disable-next-line no-console
+      console.warn(`Renamed from ${name} to ${this.props.name}`);
     }
   }
 
   componentWillUnmount(): void {
-    window.clearInterval(this.timerId);
+    this.handleStop();
+    document.removeEventListener('click', this.handleClick);
+    document.removeEventListener('contextmenu', this.handleContextMenu);
   }
 
   render() {
-    const { clockName } = this.props;
-    const { today } = this.state;
+    const { name } = this.props;
 
     return (
       <div className="Clock">
-        <strong className="Clock__name">{clockName}</strong>
+        <strong className="Clock__name">{name}</strong>
         {' time is '}
         <span className="Clock__time">
-          {today.toUTCString().slice(-12, -4)}
+          {this.state.today.toUTCString().slice(-12, -4)}
         </span>
       </div>
     );
